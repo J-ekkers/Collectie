@@ -1,110 +1,113 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Collectie</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-        .controls { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
-        input[type="text"], select {
-            padding: 8px;
-            font-size: 1em;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        .item { background: white; padding: 15px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .item img { max-width: 300px; height: auto; margin-top: 10px; }
-        .item-title { font-size: 1.5em; margin: 0; }
-        .item a { text-decoration: none; color: #3498db; }
-        .sold-link { display: block; margin-top: 10px; font-weight: bold; color: #e74c3c; }
-        .price-info { margin-top: 10px; font-size: 1.1em; color: #2c3e50; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Collectie</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    input[type="text"] {
+      padding: 8px;
+      font-size: 1em;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .item {
+      background: white;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .item img {
+      max-width: 300px;
+      height: auto;
+      margin-top: 10px;
+    }
+    .item-title {
+      font-size: 1.5em;
+      margin: 0;
+    }
+    .item a {
+      text-decoration: none;
+      color: #3498db;
+    }
+    .sold-link {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #e74c3c;
+    }
+  </style>
 </head>
 <body>
-    <h1>Collectie</h1>
+  <h1>Collectie</h1>
 
-    <div class="controls">
-        <input type="text" id="searchInput" placeholder="Zoek op titel...">
-        <select id="priceFilter">
-            <option value="all">Toon alles</option>
-            <option value="with_price">Met verkoopprijs</option>
-            <option value="without_price">Zonder verkoopprijs</option>
-        </select>
-        <select id="sortOrder">
-            <option value="none">Sorteer op prijs</option>
-            <option value="asc">Laag → Hoog</option>
-            <option value="desc">Hoog → Laag</option>
-        </select>
-    </div>
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Zoek op titel...">
+  </div>
 
-    <div id="items-container">Loading items...</div>
+  <div id="items-container">Loading items...</div>
 
-    <script>
-        let allItems = [];
+  <script>
+    let allItems = [];
 
-        function renderItems() {
-            const container = document.getElementById('items-container');
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filter = document.getElementById('priceFilter').value;
-            const sortOrder = document.getElementById('sortOrder').value;
+    function renderItems() {
+      const container = document.getElementById('items-container');
+      const search = document.getElementById('searchInput').value.toLowerCase();
 
-            container.innerHTML = '';
+      container.innerHTML = '';
 
-            let filtered = allItems.filter(item => {
-                const matchesSearch = item.title.toLowerCase().includes(search);
-                const hasPrice = item.average_sold_price !== undefined && item.average_sold_price !== null;
+      let filtered = allItems.filter(item => {
+        return item.title.toLowerCase().includes(search);
+      });
 
-                if (filter === 'with_price' && !hasPrice) return false;
-                if (filter === 'without_price' && hasPrice) return false;
+      if (filtered.length === 0) {
+        container.innerText = 'Geen resultaten gevonden.';
+        return;
+      }
 
-                return matchesSearch;
-            });
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <h2 class="item-title">
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+          </h2>
+          <img src="${item.image_url}" alt="${item.title}">
+          ${item.sold_url ? `<a class="sold-link" href="${item.sold_url}" target="_blank" rel="noopener noreferrer">Verkochte exemplaren (via eBay)</a>` : ''}
+        `;
+        container.appendChild(div);
+      });
+    }
 
-            if (sortOrder === 'asc') {
-                filtered.sort((a, b) => (a.average_sold_price || 0) - (b.average_sold_price || 0));
-            } else if (sortOrder === 'desc') {
-                filtered.sort((a, b) => (b.average_sold_price || 0) - (a.average_sold_price || 0));
-            }
-
-            if (filtered.length === 0) {
-                container.innerText = 'Geen resultaten gevonden.';
-                return;
-            }
-
-            filtered.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.innerHTML = `
-                    <h2 class="item-title"><a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a></h2>
-                    <img src="${item.image_url}" alt="${item.title}">
-                    ${item.average_sold_price !== undefined && item.average_sold_price !== null ? `<div class="price-info">Gemiddelde verkoopprijs: $${item.average_sold_price.toFixed(2)}</div>` : ''}
-                    ${item.sold_url ? `<a class="sold-link" href="${item.sold_url}" target="_blank" rel="noopener noreferrer">Verkochte exemplaren (via eBay)</a>` : ''}
-                `;
-                container.appendChild(div);
-            });
+    fetch('hobbydb_items_with_sold.json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not OK');
         }
+        return response.json();
+      })
+      .then(data => {
+        allItems = Array.isArray(data) ? data : [];
+        renderItems();
+      })
+      .catch(err => {
+        const container = document.getElementById('items-container');
+        container.innerText = 'Fout bij laden van items.';
+        console.error('Fetch error:', err);
+      });
 
-        fetch('hobbydb_items_with_sold.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not OK');
-                }
-                return response.json();
-            })
-            .then(data => {
-                allItems = Array.isArray(data) ? data : [];
-                renderItems();
-            })
-            .catch(err => {
-                const container = document.getElementById('items-container');
-                container.innerText = 'Fout bij laden van items.';
-                console.error('Fetch error:', err);
-            });
-
-        document.getElementById('searchInput').addEventListener('input', renderItems);
-        document.getElementById('priceFilter').addEventListener('change', renderItems);
-        document.getElementById('sortOrder').addEventListener('change', renderItems);
-    </script>
+    document.getElementById('searchInput').addEventListener('input', renderItems);
+  </script>
 </body>
 </html>
